@@ -11,6 +11,5 @@ public class Main {
         FileDataHandler fileDataHandler = new FileDataHandler();
         List<LineDataModel> lineDataModels = fileDataHandler.doHandle("E:\\workspaces\\workapace_hex\\LeetCode\\src\\main\\java\\interview\\ant\\files");
         System.out.println(lineDataModels);
-        System.out.println("结束");
     }
 }
