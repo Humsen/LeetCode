@@ -1,10 +1,9 @@
-package interview.ant;
+package interview.ant.template;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
-import java.util.Observer;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -20,50 +19,59 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
+ * T - 消费者参数
+ * P - 生产者线程类
+ * C - 消费者线程类
+ * M - 最终结果模型
+ *
  * @author 何明胜 husen@hemingsheng.cn
  * @since 2021-03-02 23:57:38
  */
-public abstract class BaseDataHandler<T, S extends ConsumeThread> extends Observable {
+public abstract class BaseDataHandler<T, P extends BaseProduceThread, C extends BaseConsumeThread<M>, M> extends Observable {
 
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-    Future<Map<String, BlockingQueue<LineDataModel>>> future;
-    BlockingQueue<LineDataModel> dataQueue = new LinkedBlockingQueue<>(100);
-    ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(10, 10, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(90));
+    protected Future<Map<String, BlockingQueue<M>>> future;
+    protected ExecutorService executorService = Executors.newSingleThreadExecutor();
+    protected BlockingQueue<M> dataQueue = new LinkedBlockingQueue<>(100);
+    protected ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(10, 10, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(90));
 
-    public abstract S createObserver();
-
-    public List<LineDataModel> doHandle(T param) {
-        S observer = createObserver();
-        observer.setDataQueue(dataQueue);
-
-        // 调用模板方法
+    public List<M> doHandle(T param) {
+        // Step1: 创建消费者
+        C observer = createConsumer();
+        // Step2: 启动消费
         doConsume(observer);
+        // Step3: 启动生产
         doProduce(param, observer);
+        // Step4: 生产完毕优雅停机
         doShutdown();
-
+        // Step5: 通知消费者生产完毕
+        setChanged();
+        notifyObservers();
+        // Step6: 获取结果
         return doGetResult();
     }
 
-    public abstract void doProduce(T param, S observer);
+    public abstract C createConsumer();
 
-    public abstract void doConsume(Callable<Map<String, BlockingQueue<LineDataModel>>> callable);
+    public abstract P createProducer();
+
+    public abstract void doProduce(T param, C observer);
+
+    public abstract void doConsume(Callable<Map<String, BlockingQueue<M>>> callable);
 
     public void doShutdown() {
-        // Step3: 优雅停机等待数据全局读取完毕，然后设置消费结束标志
+        // 优雅停机等待数据全局读取完毕，然后设置消费结束标志
         threadPoolExecutor.shutdown();
         try {
             threadPoolExecutor.awaitTermination(10, TimeUnit.HOURS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        setChanged();
-        notifyObservers();
         executorService.shutdown();
     }
 
-    public List<LineDataModel> doGetResult() {
+    public List<M> doGetResult() {
         try {
-            Map<String, BlockingQueue<LineDataModel>> resultMap = future.get(10, TimeUnit.HOURS);
+            Map<String, BlockingQueue<M>> resultMap = future.get(10, TimeUnit.HOURS);
             // 每个分组下面的最小指标值
             return resultMap.values().stream().map(Queue::poll).collect(Collectors.toList());
         } catch (InterruptedException | ExecutionException | TimeoutException e) {

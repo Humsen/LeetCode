@@ -1,5 +1,7 @@
 package interview.ant;
 
+import interview.ant.template.BaseProduceThread;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,15 +13,16 @@ import java.util.concurrent.BlockingQueue;
  * @author 何明胜 husen@hemingsheng.cn
  * @since 2021-03-03 00:02:29
  */
-public class FileReadThread implements Runnable {
+public class FileReadThread extends BaseProduceThread {
 
-    private final File file;
+    private File file;
 
-    private final BlockingQueue<LineDataModel> dataQueue;
-
-    public FileReadThread(File file, BlockingQueue<LineDataModel> dataQueue) {
-        this.file = file;
+    public FileReadThread(BlockingQueue<LineDataModel> dataQueue) {
         this.dataQueue = dataQueue;
+    }
+
+    public void setFile(File file) {
+        this.file = file;
     }
 
     @Override

@@ -1,5 +1,7 @@
 package interview.ant;
 
+import interview.ant.template.BaseConsumeThread;
+
 import java.util.Map;
 import java.util.Observable;
 import java.util.concurrent.BlockingQueue;
@@ -10,7 +12,11 @@ import java.util.concurrent.PriorityBlockingQueue;
  * @author 何明胜 husen@hemingsheng.cn
  * @since 2021-03-03 00:33:49
  */
-public class DataSortThread extends ConsumeThread {
+public class DataSortThread extends BaseConsumeThread<LineDataModel> {
+
+    public DataSortThread(BlockingQueue<LineDataModel> dataQueue) {
+        this.dataQueue = dataQueue;
+    }
 
     @Override
     public Map<String, BlockingQueue<LineDataModel>> call() {

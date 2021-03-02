@@ -1,4 +1,4 @@
-package interview.ant;
+package interview.ant.template;
 
 import java.util.Map;
 import java.util.Observable;
@@ -10,13 +10,13 @@ import java.util.concurrent.Callable;
  * @author 何明胜 husen@hemingsheng.cn
  * @since 2021-03-03 02:32:09
  */
-public abstract class ConsumeThread implements Callable<Map<String, BlockingQueue<LineDataModel>>>, Observer {
+public abstract class BaseConsumeThread<M> implements Callable<Map<String, BlockingQueue<M>>>, Observer {
 
     protected boolean over;
 
-    protected BlockingQueue<LineDataModel> dataQueue;
+    protected BlockingQueue<M> dataQueue;
 
-    public void setDataQueue(BlockingQueue<LineDataModel> dataQueue) {
+    public void setDataQueue(BlockingQueue<M> dataQueue) {
         this.dataQueue = dataQueue;
     }
 
@@ -26,7 +26,7 @@ public abstract class ConsumeThread implements Callable<Map<String, BlockingQueu
     }
 
     @Override
-    public Map<String, BlockingQueue<LineDataModel>> call() throws Exception {
+    public Map<String, BlockingQueue<M>> call() {
         return null;
     }
 }
